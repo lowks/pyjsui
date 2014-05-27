@@ -22,15 +22,7 @@ class Foo(object):
         return self.msg
 
 
-template = """
-<html>
-    <head>
-        <script src="{{url_for('static', filename='js/jquery-2.1.0.js')}}" type="text/javascript"></script>
-        <script src="{{url_for('static', filename='js/jquery.json-2.4.js')}}" type="text/javascript"></script>
-        <script src="{{url_for('static', filename='js/jquery.jsonrpcclient.js')}}" type="text/javascript"></script>
-    </head>
-    <body>
-        <script type="text/javascript">
+js = """
         var ecb = function (e) {
             console.log({'error': e});
         };
@@ -39,9 +31,24 @@ template = """
         };
         var socket;
         $(function () {
-            socket = new $.JsonRpcClient({'socketUrl': 'ws://127.0.0.1:5000/{{ name }}/ws'});
+            socket = new $.JsonRpcClient(
+            {'socketUrl': 'ws://' + window.location.host + '/{{ name }}/ws'});
         });
-        </script>
+"""
+
+template = """
+<html>
+    <head>
+        <script src="{{url_for('static', filename='js/jquery-2.1.0.js')}}" type="text/javascript"></script>
+        <script src="{{url_for('static', filename='js/jquery.json-2.4.js')}}" type="text/javascript"></script>
+        <script src="{{url_for('static', filename='js/jquery.jsonrpcclient.js')}}" type="text/javascript"></script>
+    </head>
+    <body>
+        {% if js is defined %}
+            <script type="text/javascript">
+            {{ js }}
+            </script>
+        {% endif %}
     </body>
 </html>
 """
@@ -56,12 +63,13 @@ specs = [
         'template': template,
         #'css': ,
         #'html': ,
-        #'js': ,
+        'js': js,
     },
     {
         'name': 'b',
         'object': Foo(),
         'template': template,
+        'js': js
     },
 ]
 

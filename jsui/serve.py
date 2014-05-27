@@ -6,17 +6,6 @@ import gevent
 import rpc
 
 
-#def register(obj, url=None):
-#    if url is None:
-#        url = '/ws'
-#
-#    @sockets.route(url)
-#    def websocket(ws):
-#        handler = wrapper.JSONRPC(obj, ws)
-#        while not ws.closed:
-#            gevent.sleep(0.001)
-#            handler.update()
-
 def rename(name):
     def wrap(func):
         func.func_name = name
@@ -56,9 +45,14 @@ def register(spec):
         @rpc.serve.server.route('/{}'.format(spec['name']))
         @rename('{}_template'.format(spec['name']))
         def template():
-            # TODO pre-render css, html, js
+            # pre-render css, html, js
+            local_spec = spec.copy()
+            for item in ('css', 'js', 'html'):
+                if item in spec:
+                    local_spec[item] = flask.render_template_string(
+                        spec[item], **spec)
             return flask.render_template_string(
-                spec['template'], **spec)
+                spec['template'], **local_spec)
     # pde?
 
 
