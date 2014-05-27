@@ -1,64 +1,67 @@
 #!/usr/bin/env python
 
 import flask
-import flask_sockets
 import gevent
-from gevent import pywsgi
-from geventwebsocket.handler import WebSocketHandler
 
-from . import wrapper
+import rpc
 
 
-server = flask.Flask('rpc')
-sockets = flask_sockets.Sockets(server)
+#def register(obj, url=None):
+#    if url is None:
+#        url = '/ws'
+#
+#    @sockets.route(url)
+#    def websocket(ws):
+#        handler = wrapper.JSONRPC(obj, ws)
+#        while not ws.closed:
+#            gevent.sleep(0.001)
+#            handler.update()
 
-
-def register(obj, url=None):
-    if url is None:
-        url = '/ws'
-
-    @sockets.route(url)
-    def websocket(ws):
-        handler = wrapper.JSONRPC(obj, ws)
-        while not ws.closed:
-            gevent.sleep(0.001)
-            handler.update()
+def rename(name):
+    def wrap(func):
+        func.func_name = name
+        return func
+    return wrap
 
 
 def register(spec):
-    @sockets.route('/{}/ws'.format(spec['name']))
+    @rpc.serve.sockets.route('/{}/ws'.format(spec['name']))
     def websocket(ws):
-        handler = wrapper.JSONRPC(spec['object'], ws)
+        handler = rpc.wrapper.JSONRPC(
+            spec['object'], ws, encoder=spec.get('encoder', None),
+            decoder=spec.get('decoder', None))
         while not ws.closed:
             gevent.sleep(0.001)
             handler.update()
     # register template
-    if 'template' in spec:
-        # register template
-        @server.route('/{}')
-        def template():
-            # spec['template']
-            pass
     if 'css' in spec:
-        @server.route('/{}/css')
+        @rpc.serve.server.route('/{}/css'.format(spec['name']))
+        @rename('{}_css'.format(spec['name']))
         def css():
-            # spec['css']
-            pass
+            return flask.render_template_string(spec['css'], **spec)
     if 'js' in spec:
-        @server.route('/{}/js')
+        @rpc.serve.server.route('/{}/js'.format(spec['name']))
+        @rename('{}_js'.format(spec['name']))
         def js():
             # for signals, register persistant callbacks
             # for functions, register temporary callbacks
-            # spec['js']
-            pass
+            return flask.render_template_string(spec['js'], **spec)
     if 'html' in spec:
-        @server.route('/{}/html')
+        @rpc.serve.server.route('/{}/html'.format(spec['name']))
+        @rename('{}_html'.format(spec['name']))
         def html():
-            pass
+            return flask.render_template_string(spec['html'], **spec)
+    if 'template' in spec:
+        # register template
+        @rpc.serve.server.route('/{}'.format(spec['name']))
+        @rename('{}_template'.format(spec['name']))
+        def template():
+            # TODO pre-render css, html, js
+            return flask.render_template_string(
+                spec['template'], **spec)
     # pde?
 
 
 def serve():
-    wsgi_server = pywsgi.WSGIServer(
-        ('', 5000), server, handler_class=WebSocketHandler)
-    wsgi_server.serve_forever()
+    rpc.serve.server.debug = True
+    rpc.serve.serve()
