@@ -15,6 +15,7 @@ def rename(name):
 
 def register(spec):
     @rpc.serve.sockets.route('/{}/ws'.format(spec['name']))
+    @rename('{}_ws'.format(spec['name']))
     def websocket(ws):
         handler = rpc.wrapper.JSONRPC(
             spec['object'], ws, encoder=spec.get('encoder', None),
