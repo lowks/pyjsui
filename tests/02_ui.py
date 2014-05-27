@@ -35,8 +35,7 @@ js = """
         var rcb = function (r) {
             console.log({'result': r});
         };
-        var new_message = function (args) {
-            msg = args[0][0];
+        var new_message = function (msg) {
             console.log({'new_message': msg});
             $('#msg').val(msg);
         };
@@ -50,6 +49,7 @@ js = """
             });
         });
 """
+html = """<input type="text" id="msg"></input>"""
 
 template = """
 <html>
@@ -57,6 +57,11 @@ template = """
         <script src="{{url_for('static', filename='js/jquery-2.1.0.js')}}" type="text/javascript"></script>
         <script src="{{url_for('static', filename='js/jquery.json-2.4.js')}}" type="text/javascript"></script>
         <script src="{{url_for('static', filename='js/jquery.jsonrpcclient.js')}}" type="text/javascript"></script>
+        {% if css is defined %}
+            <style type="text/css">
+            {{ css }}
+            </style>
+        {% endif %}
     </head>
     <body>
         {% if js is defined %}
@@ -64,7 +69,9 @@ template = """
             {{ js }}
             </script>
         {% endif %}
-        <input type="text" id="msg"></input>
+        {% if html is defined %}
+            {{ html }}
+        {% endif %}
     </body>
 </html>
 """
@@ -78,14 +85,15 @@ specs = [
         #'decoder': ,
         'template': template,
         #'css': ,
-        #'html': ,
+        'html': html,
         'js': js,
     },
     {
         'name': 'b',
         'object': Foo(),
         'template': template,
-        'js': js
+        'html': html,
+        'js': js,
     },
 ]
 
