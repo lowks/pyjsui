@@ -13,6 +13,7 @@ def rename(name):
     return wrap
 
 
+# TODO maybe make this a blueprint? would make static files easier
 def register(spec):
     @rpc.serve.sockets.route('/{}/ws'.format(spec['name']))
     @rename('{}_ws'.format(spec['name']))
@@ -54,6 +55,15 @@ def register(spec):
                         spec[item], **spec)
             return flask.render_template_string(
                 spec['template'], **local_spec)
+    if 'static' in spec:
+        @rpc.serve.server.route('/{}/static/<path:filename>'.format(spec['name']))
+        @rename('{}_static'.format(spec['name']))
+        def static(filename):
+            # {{ url_for('custom_static', filename='foo') }} to use
+            # TODO werkzeug.utils.secure_filename(filename)
+            return flask.send_from_directory(
+                rpc.serve.server.config[
+                    '{}_STATIC_PATH'.format(spec['name'])], filename)
     # pde?
 
 
