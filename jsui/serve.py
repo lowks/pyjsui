@@ -54,9 +54,9 @@ def make_blueprint(spec):
             return flask.render_template_string(
                 spec['template'], **local_spec)
     if 'template_folder' in spec:
-        @bp.route('/template/<template>')
+        @bp.route('/templates/<template>')
         def named_template(template):
-            return flask.render_template(template)
+            return flask.render_template(template, **spec)
     return bp
 
 
