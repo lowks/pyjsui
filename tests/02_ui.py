@@ -43,6 +43,9 @@ js = """
         $(function () {
             socket = new $.JsonRpcClient(
             {'socketUrl': 'ws://' + window.location.host + '/{{ name }}/ws'});
+            socket.call(
+                'get_message', [], function (msg) { $('#msg').val(msg); },
+                ecb);
             socket.call('new_message.connect', [], new_message, ecb, true);
             $('#msg').on('change', function () {
                 socket.call('set_message', [$('#msg').val(), ], rcb, ecb);

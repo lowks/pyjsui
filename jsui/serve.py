@@ -13,8 +13,14 @@ def rename(name):
     return wrap
 
 
-# TODO maybe make this a blueprint? would make static files easier
-def register(spec):
+def make_blueprint(spec):
+    kwargs = {'url_prefix': '/{}'.format(spec['name'])}
+    for k in ('static_folder', 'template_folder', 'static_url_path',
+              'url_prefix'):
+        if k in spec:
+            kwargs[k] = spec[k]
+    bp = flask.Blueprint(spec['name'], spec['name'], **kwargs)
+
     @rpc.serve.sockets.route('/{}/ws'.format(spec['name']))
     @rename('{}_ws'.format(spec['name']))
     def websocket(ws):
@@ -24,30 +30,22 @@ def register(spec):
         while not ws.closed:
             gevent.sleep(0.001)
             handler.update()
-    # register template
+
     if 'css' in spec:
-        @rpc.serve.server.route('/{}/css'.format(spec['name']))
-        @rename('{}_css'.format(spec['name']))
+        @bp.route('/css')
         def css():
             return flask.render_template_string(spec['css'], **spec)
     if 'js' in spec:
-        @rpc.serve.server.route('/{}/js'.format(spec['name']))
-        @rename('{}_js'.format(spec['name']))
+        @bp.route('/js')
         def js():
-            # for signals, register persistant callbacks
-            # for functions, register temporary callbacks
             return flask.render_template_string(spec['js'], **spec)
     if 'html' in spec:
-        @rpc.serve.server.route('/{}/html'.format(spec['name']))
-        @rename('{}_html'.format(spec['name']))
+        @bp.route('/html')
         def html():
             return flask.render_template_string(spec['html'], **spec)
     if 'template' in spec:
-        # register template
-        @rpc.serve.server.route('/{}'.format(spec['name']))
-        @rename('{}_template'.format(spec['name']))
+        @bp.route('/')
         def template():
-            # pre-render css, html, js
             local_spec = spec.copy()
             for item in ('css', 'js', 'html'):
                 if item in spec:
@@ -55,16 +53,16 @@ def register(spec):
                         spec[item], **spec)
             return flask.render_template_string(
                 spec['template'], **local_spec)
-    if 'static' in spec:
-        @rpc.serve.server.route('/{}/static/<path:filename>'.format(spec['name']))
-        @rename('{}_static'.format(spec['name']))
-        def static(filename):
-            # {{ url_for('custom_static', filename='foo') }} to use
-            # TODO werkzeug.utils.secure_filename(filename)
-            return flask.send_from_directory(
-                rpc.serve.server.config[
-                    '{}_STATIC_PATH'.format(spec['name'])], filename)
-    # pde?
+    if 'template_folder' in spec:
+        @bp.route('/template/<template>')
+        def named_template(template):
+            return flask.render_template(template)
+    return bp
+
+
+def register(spec):
+    bp = make_blueprint(spec)
+    rpc.serve.server.register_blueprint(bp)
 
 
 def serve():
