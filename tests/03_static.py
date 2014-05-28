@@ -24,4 +24,5 @@ jsui.serve.register({
     'static_folder': static,
     'template_folder': templates,
 })
+print("Go to http://127.0.0.1:5000/hi/templates/hi.html")
 jsui.serve.serve()
