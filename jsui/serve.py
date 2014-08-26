@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import flask
-import gevent
 
 import rpc
 
@@ -21,15 +20,9 @@ def make_blueprint(spec):
             kwargs[k] = spec[k]
     bp = flask.Blueprint(spec['name'], spec['name'], **kwargs)
 
-    @rpc.serve.sockets.route('/{}/ws'.format(spec['name']))
-    @rename('{}_ws'.format(spec['name']))
-    def websocket(ws):
-        handler = rpc.wrapper.JSONRPC(
-            spec['object'], ws, encoder=spec.get('encoder', None),
-            decoder=spec.get('decoder', None))
-        while not ws.closed:
-            gevent.sleep(0.001)
-            handler.update()
+    rpc.serve.register(
+        spec['object'], spec['name'] + '/ws',
+        encoder=spec.get('encoder', None), decoder=spec.get('decoder', None))
 
     if 'css' in spec:
         @bp.route('/css')
