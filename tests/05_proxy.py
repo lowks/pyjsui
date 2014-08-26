@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+from tornado.ioloop import IOLoop
 import jsui
+
 import pizco
 
 
@@ -35,7 +37,9 @@ template = """
 </html>
 """
 
+# this pollutes tornado.ioloop.IOLoop
 p = pizco.Proxy('tcp://127.0.0.1:12345')
+del IOLoop._instance
 
 spec = {
     'name': 'a',
