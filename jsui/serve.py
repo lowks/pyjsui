@@ -2,7 +2,7 @@
 
 import flask
 
-import rpc
+import wsrpc
 
 
 def rename(name):
@@ -20,7 +20,7 @@ def make_blueprint(spec):
             kwargs[k] = spec[k]
     bp = flask.Blueprint(spec['name'], spec['name'], **kwargs)
 
-    rpc.serve.register(
+    wsrpc.serve.register(
         spec['object'], spec['name'] + '/ws',
         encoder=spec.get('encoder', None), decoder=spec.get('decoder', None))
 
@@ -55,9 +55,9 @@ def make_blueprint(spec):
 
 def register(spec):
     bp = make_blueprint(spec)
-    rpc.serve.server.register_blueprint(bp)
+    wsrpc.serve.server.register_blueprint(bp)
 
 
 def serve():
-    rpc.serve.server.debug = True
-    rpc.serve.serve()
+    wsrpc.serve.server.debug = True
+    wsrpc.serve.serve()
