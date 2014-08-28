@@ -376,7 +376,8 @@ if __name__ == '__main__':
             packages=packages,
             scripts=scripts,
             long_description=long_description,
-
+            description="Webbrowser user interface for python",
+            url="https://github.com/braingram/pyjsui/",
             package_data=package_data,
             include_package_data=True,
 
